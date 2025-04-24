@@ -7,10 +7,10 @@
 
 @layer base {
   :root {
-    --background: 40 33% 98%;
+    --background: 35 38% 97%;
     --foreground: 224 71.4% 4.1%;
 
-    --card: 40 20% 97%;
+    --card: 35 25% 96%;
     --card-foreground: 224 71.4% 4.1%;
 
     --popover: 0 0% 100%;
@@ -25,29 +25,29 @@
     --muted: 220 14.3% 95.9%;
     --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 262 83.3% 57.8%;
+    --accent: 262 60% 65%;
     --accent-foreground: 220.9 39.3% 11%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 20% 98%;
 
-    --border: 40 12% 75%;
+    --border: 35 12% 80%;
     --input: 220 13% 91%;
     --ring: 262 93.3% 57.8%;
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 224 30% 10%;
     --foreground: 210 20% 98%;
 
-    --card: 224 71.4% 4.1%;
+    --card: 224 32% 12%;
     --card-foreground: 210 20% 98%;
 
     --popover: 224 71.4% 4.1%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 262 83.3% 57.8%;
+    --primary: 263 70% 70%;
     --primary-foreground: 210 20% 98%;
 
     --secondary: 215 27.9% 16.9%;
@@ -56,7 +56,7 @@
     --muted: 215 27.9% 16.9%;
     --muted-foreground: 217.9 10.6% 64.9%;
 
-    --accent: 262 83.3% 57.8%;
+    --accent: 263 60% 60%;
     --accent-foreground: 210 20% 98%;
 
     --destructive: 0 62.8% 30.6%;
@@ -97,16 +97,33 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    @apply bg-quill/30 rounded-full;
+    @apply bg-primary/30 rounded-full;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    @apply bg-quill/50;
+    @apply bg-primary/50;
   }
 
   /* Parchment texture */
   .bg-parchment-texture {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.07'/%3E%3C/svg%3E");
     background-repeat: repeat;
+  }
+
+  /* Add these new utility classes */
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent;
+  }
+  
+  .bg-magic {
+    background: linear-gradient(135deg, rgba(155, 135, 245, 0.2) 0%, rgba(155, 135, 245, 0.05) 100%);
+  }
+  
+  .shadow-glow {
+    box-shadow: 0 0 15px 5px rgba(155, 135, 245, 0.2);
+  }
+  
+  .border-gradient {
+    border-image: linear-gradient(45deg, #9b87f5, transparent) 1;
   }
 }

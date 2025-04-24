@@ -15,6 +15,7 @@ export interface StoryParams {
   characters: string;
   setting: string;
   format: string;
+  imageBase64?: string; // Optional image input
 }
 
 export interface GenerationResponse {
@@ -78,8 +79,32 @@ export const generateStory = async (params: StoryParams): Promise<GenerationResp
   requestTimes.push(Date.now());
   
   try {
-    // Build the prompt for the AI
-    const prompt = buildStoryPrompt(params);
+    // Build the API request body
+    let requestBody;
+    
+    if (params.imageBase64) {
+      // If image is included, use multimodal prompt
+      requestBody = {
+        contents: [{
+          parts: [
+            {
+              text: buildImageStoryPrompt(params)
+            },
+            {
+              inline_data: {
+                mime_type: "image/jpeg",
+                data: params.imageBase64.split(',')[1] // Remove the data URL prefix
+              }
+            }
+          ]
+        }]
+      };
+    } else {
+      // Text-only prompt
+      requestBody = {
+        contents: [{ parts: [{ text: buildStoryPrompt(params) }] }]
+      };
+    }
     
     // Make the API request
     const response = await fetch(
@@ -89,9 +114,7 @@ export const generateStory = async (params: StoryParams): Promise<GenerationResp
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
+        body: JSON.stringify(requestBody)
       }
     );
     
@@ -172,6 +195,40 @@ const buildStoryPrompt = (params: StoryParams): string => {
       - Minimum 3 natural dialogues
       - Strict ${perspective} perspective
       - Paragraph breaks every 3-5 sentences
+      - Don't include any markdown formatting in your response
+    `;
+  }
+};
+
+/**
+ * Build a prompt for image-based story generation
+ */
+const buildImageStoryPrompt = (params: StoryParams): string => {
+  const { genre, perspective, format } = params;
+  
+  if (format === 'dialogue') {
+    return `
+      Look at this image and create a 300-word ${genre} story in dialogue-only format based on what you see.
+      
+      **Requirements**:
+      - Use only dialogue, formatted as "Character: Dialogue text" (e.g., "Sarah: Hello")
+      - Each line must be spoken by a character (no narration)
+      - Include at least 5-7 dialogue exchanges
+      - Maintain ${perspective} perspective through the dialogue
+      - Convey the scene from the image entirely through character speech
+      - Create names for any characters you see or imagine in the image
+      - End with a clear resolution
+    `;
+  } else {
+    return `
+      Look at this image and create a 300-word ${genre} story based on what you see.
+      
+      **Requirements**:
+      - Three-act structure (setup → confrontation → resolution)
+      - Minimum 3 natural dialogues
+      - Strict ${perspective} perspective
+      - Paragraph breaks every 3-5 sentences
+      - Create names for any characters you see or imagine in the image
       - Don't include any markdown formatting in your response
     `;
   }

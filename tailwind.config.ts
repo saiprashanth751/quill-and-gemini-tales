@@ -67,7 +67,7 @@ export default {
 				parchment: {
 					light: '#F5EEE0',
 					DEFAULT: '#EBE1CE',
-					dark: '#2A2520'
+					dark: '#1F1D18'  // Darkened for better dark mode
 				},
 				ink: {
 					DEFAULT: '#1A1F2C',
@@ -123,6 +123,10 @@ export default {
 			fontFamily: {
 				serif: ['Lora', 'Georgia', 'serif'],
 				decorative: ['Playfair Display', 'serif']
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
 			}
 		}
 	},

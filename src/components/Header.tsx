@@ -1,22 +1,23 @@
 
 import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { Sparkles } from "lucide-react";
 
 export default function Header() {
   return (
-    <header className="border-b border-border/20 bg-card">
+    <header className="border-b border-border/20 bg-gradient-to-r from-card via-background to-card">
       <div className="container flex h-16 items-center justify-between py-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className={cn(
-            "relative h-8 w-8 transform-gpu",
+            "relative h-10 w-10 transform-gpu",
             "before:absolute before:inset-0 before:bg-primary/20 before:rounded-full before:animate-ping before:animation-delay-100",
           )}>
-            <div className="relative h-full w-full rounded-full bg-primary flex items-center justify-center shadow-sm">
-              <span className="text-lg font-bold text-primary-foreground">Q</span>
+            <div className="relative h-full w-full rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
+              <Sparkles className="h-5 w-5 text-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-xl font-bold md:text-2xl">
-            <span className="text-primary">Quill</span> & <span className="font-italic">Gemini</span> Tales
+          <h1 className="text-xl font-bold md:text-2xl bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
+            <span className="text-primary font-decorative">Quill</span> & <span className="font-italic">Gemini</span> Tales
           </h1>
         </div>
         

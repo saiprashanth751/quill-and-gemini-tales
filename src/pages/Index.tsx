@@ -29,7 +29,7 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background bg-[radial-gradient(ellipse_at_top,var(--tw-gradient-stops))] from-background via-background to-background/95">
       <Header />
       
       <main className="flex-1 container py-8">
@@ -46,9 +46,9 @@ const Index = () => {
         </div>
       </main>
       
-      <footer className="py-6 border-t border-border/20 bg-card">
+      <footer className="py-6 border-t border-border/20 bg-gradient-to-r from-card via-background to-card">
         <div className="container text-center text-sm text-muted-foreground">
-          <p>Powered by Google Gemini API</p>
+          <p>Powered by Google Gemini API & React</p>
         </div>
       </footer>
     </div>
