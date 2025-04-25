@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/sonner";
 
 // Add type definitions for the Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -75,6 +76,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
       recognition.onstart = () => {
         setIsListening(true);
         setError(null);
+        toast.info("Listening... Speak your story plot now");
       };
       
       recognition.onresult = (event: SpeechRecognitionEvent) => {
@@ -88,13 +90,17 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
       recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         setError(`Speech recognition error: ${event.error}`);
         setIsListening(false);
+        toast.error(`Speech recognition error: ${event.error}`);
       };
       
       recognition.onend = () => {
         setIsListening(false);
         // Only return the transcript if we actually got something
         if (transcript.trim().length > 0) {
+          toast.success("Voice input captured!");
           onTranscriptReady(transcript);
+        } else {
+          toast.info("No speech detected. Try again?");
         }
       };
     } else {
@@ -116,6 +122,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
     
     if (!SpeechRecognitionAPI) {
       setError('Speech recognition is not supported in this browser.');
+      toast.error('Speech recognition is not supported in this browser.');
       return;
     }
     
@@ -123,10 +130,12 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
       const recognition = new SpeechRecognitionAPI();
       recognition.stop();
       setIsListening(false);
+      toast.info("Voice recording stopped");
     } else {
       setTranscript(''); // Clear previous transcript
       const recognition = new SpeechRecognitionAPI();
       recognition.start();
+      toast.info("Listening started. Speak now...");
     }
   };
   
@@ -137,7 +146,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
           type="button"
           onClick={toggleListening}
           variant={isListening ? "destructive" : "outline"}
-          className={`relative ${isListening ? 'animate-pulse' : ''} transition-all duration-300`}
+          className={`relative ${isListening ? 'animate-pulse' : ''} transition-all duration-300 w-full sm:w-auto`}
         >
           {isListening ? (
             <>
@@ -174,6 +183,21 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
         <div className="p-2 border border-border rounded-md bg-background/50 mb-2">
           <p className="text-sm font-medium">Transcript:</p>
           <p className="text-sm text-muted-foreground">{transcript}</p>
+        </div>
+      )}
+
+      {isListening && (
+        <div className="flex justify-center items-center gap-2 p-3 my-2 border border-primary/30 rounded-md bg-primary/5">
+          <div className="flex space-x-1">
+            <div className="w-1 h-8 bg-primary animate-pulse rounded"></div>
+            <div className="w-1 h-8 bg-primary animate-pulse rounded animation-delay-200"></div>
+            <div className="w-1 h-8 bg-primary animate-pulse rounded animation-delay-500"></div>
+            <div className="w-1 h-8 bg-primary animate-pulse rounded animation-delay-300"></div>
+            <div className="w-1 h-8 bg-primary animate-pulse rounded animation-delay-100"></div>
+          </div>
+          <span className="text-sm font-medium text-primary animate-pulse">
+            Listening... Speak clearly
+          </span>
         </div>
       )}
     </div>
