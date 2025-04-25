@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -36,7 +35,6 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If image tab is active and we have an image, include it
     if (activeTab === "image" && imageBase64) {
       onSubmit({ ...formData, imageBase64 });
     } else {
@@ -129,7 +127,6 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Genre Selection */}
           <div className="space-y-2">
             <Label htmlFor="genre" className="text-sm font-medium">
               Genre
@@ -147,11 +144,12 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
                 <SelectItem value="mystery">Mystery</SelectItem>
                 <SelectItem value="horror">Horror</SelectItem>
                 <SelectItem value="adventure">Adventure</SelectItem>
+                <SelectItem value="romance">Romance</SelectItem>
+                <SelectItem value="erotic">Erotic</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
-          {/* Perspective Selection */}
           <div className="space-y-2">
             <Label htmlFor="perspective" className="text-sm font-medium">
               Perspective
@@ -171,7 +169,6 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
             </Select>
           </div>
           
-          {/* Format Selection */}
           <div className="space-y-2">
             <Label htmlFor="format" className="text-sm font-medium">
               Story Format
@@ -191,7 +188,6 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
           </div>
         </div>
         
-        {/* Submit Button */}
         <Button 
           type="submit" 
           disabled={loading || !isFormValid}
