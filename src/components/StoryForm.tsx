@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,10 @@ import { Loader, Sparkles } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VoiceInput from "./VoiceInput";
 import ImageUpload from "./ImageUpload";
+import { StoryLength } from "./story-settings/StoryLength";
+import { StoryMood } from "./story-settings/StoryMood";
+import { StoryPeriod } from "./story-settings/StoryPeriod";
+import { StoryAtmosphere } from "./story-settings/StoryAtmosphere";
 
 interface StoryFormProps {
   onSubmit: (params: StoryParams) => void;
@@ -23,6 +28,10 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
     characters: "",
     setting: "",
     format: "narrative",
+    length: "medium",
+    mood: "happy",
+    period: "modern",
+    atmosphere: "sunny",
   });
   
   const [imageBase64, setImageBase64] = useState<string | null>(null);
@@ -124,6 +133,30 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StoryLength 
+              value={formData.length} 
+              onChange={(value) => handleChange("length", value)} 
+            />
+            <StoryAtmosphere 
+              value={formData.atmosphere} 
+              onChange={(value) => handleChange("atmosphere", value)} 
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <StoryMood 
+              value={formData.mood} 
+              onChange={(value) => handleChange("mood", value)} 
+            />
+            <StoryPeriod 
+              value={formData.period} 
+              onChange={(value) => handleChange("period", value)} 
+            />
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

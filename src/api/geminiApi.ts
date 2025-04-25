@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/sonner";
 
 // API Configuration
@@ -15,7 +14,11 @@ export interface StoryParams {
   characters: string;
   setting: string;
   format: string;
-  imageBase64?: string; // Optional image input
+  imageBase64?: string;
+  length?: string;
+  mood?: string;
+  period?: string;
+  atmosphere?: string;
 }
 
 export interface GenerationResponse {
@@ -156,7 +159,7 @@ export const generateStory = async (params: StoryParams): Promise<GenerationResp
  * Build a prompt for the story generator
  */
 const buildStoryPrompt = (params: StoryParams): string => {
-  const { genre, plot, perspective, characters, setting, format } = params;
+  const { genre, plot, perspective, characters, setting, format, length, mood, period, atmosphere } = params;
   
   const characterList = characters
     .split(',')
@@ -204,7 +207,7 @@ const buildStoryPrompt = (params: StoryParams): string => {
  * Build a prompt for image-based story generation
  */
 const buildImageStoryPrompt = (params: StoryParams): string => {
-  const { genre, perspective, format } = params;
+  const { genre, perspective, format, length, mood, period, atmosphere } = params;
   
   if (format === 'dialogue') {
     return `
