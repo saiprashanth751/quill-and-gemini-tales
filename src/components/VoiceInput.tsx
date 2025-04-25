@@ -1,10 +1,8 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 
-// Add type definitions for the Web Speech API
 interface SpeechRecognitionEvent extends Event {
   resultIndex: number;
   results: SpeechRecognitionResultList;
@@ -59,83 +57,88 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   
   useEffect(() => {
-    let recognition: SpeechRecognition | null = null;
-    
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      // Use type assertion to inform TypeScript about the browser's SpeechRecognition implementation
-      const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
-                                  (window as any).webkitSpeechRecognition;
-      recognition = new SpeechRecognitionAPI();
-      
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      
-      recognition.onstart = () => {
-        setIsListening(true);
-        setError(null);
-        toast.info("Listening... Speak your story plot now");
-      };
-      
-      recognition.onresult = (event: SpeechRecognitionEvent) => {
-        let currentTranscript = '';
-        for (let i = 0; i < event.results.length; i++) {
-          currentTranscript += event.results[i][0].transcript;
-        }
-        setTranscript(currentTranscript);
-      };
-      
-      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-        setError(`Speech recognition error: ${event.error}`);
-        setIsListening(false);
-        toast.error(`Speech recognition error: ${event.error}`);
-      };
-      
-      recognition.onend = () => {
-        setIsListening(false);
-        // Only return the transcript if we actually got something
-        if (transcript.trim().length > 0) {
-          toast.success("Voice input captured!");
-          onTranscriptReady(transcript);
-        } else {
-          toast.info("No speech detected. Try again?");
-        }
-      };
-    } else {
-      setError('Speech recognition is not supported in this browser.');
-    }
-    
-    return () => {
-      if (recognition) {
-        recognition.abort();
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  
-  const toggleListening = () => {
-    // Use type assertion to inform TypeScript about the browser's SpeechRecognition implementation
     const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
-                               (window as any).webkitSpeechRecognition;
+                                (window as any).webkitSpeechRecognition;
     
     if (!SpeechRecognitionAPI) {
       setError('Speech recognition is not supported in this browser.');
-      toast.error('Speech recognition is not supported in this browser.');
+      return;
+    }
+    
+    const recognition = new SpeechRecognitionAPI();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    recognition.onstart = () => {
+      setIsListening(true);
+      setError(null);
+      toast.info("Listening... Speak your story plot now");
+    };
+    
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      let currentTranscript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        currentTranscript += event.results[i][0].transcript;
+      }
+      setTranscript(currentTranscript);
+    };
+    
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      setError(`Speech recognition error: ${event.error}`);
+      setIsListening(false);
+      toast.error(`Speech recognition error: ${event.error}`);
+    };
+    
+    recognition.onend = () => {
+      setIsListening(false);
+      if (transcript.trim().length > 0) {
+        toast.success("Voice input captured!");
+        onTranscriptReady(transcript);
+      } else if (isListening) {
+        toast.info("No speech detected. Try again?");
+      }
+    };
+    
+    recognitionRef.current = recognition;
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.abort();
+        recognitionRef.current = null;
+      }
+    };
+  }, []);
+  
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        if (transcript.trim().length > 0) {
+          toast.success("Voice input captured!");
+          onTranscriptReady(transcript);
+        } else if (isListening) {
+          toast.info("No speech detected. Try again?");
+        }
+      };
+    }
+  }, [transcript, isListening, onTranscriptReady]);
+  
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      toast.error('Speech recognition is not supported or not initialized.');
       return;
     }
     
     if (isListening) {
-      const recognition = new SpeechRecognitionAPI();
-      recognition.stop();
-      setIsListening(false);
+      recognitionRef.current.stop();
       toast.info("Voice recording stopped");
     } else {
-      setTranscript(''); // Clear previous transcript
-      const recognition = new SpeechRecognitionAPI();
-      recognition.start();
-      toast.info("Listening started. Speak now...");
+      setTranscript('');
+      recognitionRef.current.start();
     }
   };
   
@@ -203,8 +206,5 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
     </div>
   );
 };
-
-// We no longer need the previous global declaration as we've defined the interfaces above
-// And we're using type assertions instead
 
 export default VoiceInput;
