@@ -3,6 +3,53 @@ import { useState, useEffect } from 'react';
 import { Mic, MicOff } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
+// Add type definitions for the Web Speech API
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  isFinal: boolean;
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+}
+
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognition;
+  prototype: SpeechRecognition;
+}
+
 interface VoiceInputProps {
   onTranscriptReady: (transcript: string) => void;
 }
@@ -16,8 +63,11 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
     let recognition: SpeechRecognition | null = null;
     
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
+      // Use type assertion to inform TypeScript about the browser's SpeechRecognition implementation
+      const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
+                                  (window as any).webkitSpeechRecognition;
+      recognition = new SpeechRecognitionAPI();
+      
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
@@ -27,7 +77,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
         setError(null);
       };
       
-      recognition.onresult = (event) => {
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
         let currentTranscript = '';
         for (let i = 0; i < event.results.length; i++) {
           currentTranscript += event.results[i][0].transcript;
@@ -35,7 +85,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
         setTranscript(currentTranscript);
       };
       
-      recognition.onerror = (event) => {
+      recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
         setError(`Speech recognition error: ${event.error}`);
         setIsListening(false);
       };
@@ -60,20 +110,22 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
   }, []);
   
   const toggleListening = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    // Use type assertion to inform TypeScript about the browser's SpeechRecognition implementation
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || 
+                               (window as any).webkitSpeechRecognition;
     
-    if (!SpeechRecognition) {
+    if (!SpeechRecognitionAPI) {
       setError('Speech recognition is not supported in this browser.');
       return;
     }
     
     if (isListening) {
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionAPI();
       recognition.stop();
       setIsListening(false);
     } else {
       setTranscript(''); // Clear previous transcript
-      const recognition = new SpeechRecognition();
+      const recognition = new SpeechRecognitionAPI();
       recognition.start();
     }
   };
@@ -128,12 +180,7 @@ const VoiceInput = ({ onTranscriptReady }: VoiceInputProps) => {
   );
 };
 
-// Add type definition
-declare global {
-  interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
-}
+// We no longer need the previous global declaration as we've defined the interfaces above
+// And we're using type assertions instead
 
 export default VoiceInput;
