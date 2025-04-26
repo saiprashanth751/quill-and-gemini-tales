@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -14,6 +13,7 @@ import { StoryLength } from "./story-settings/StoryLength";
 import { StoryMood } from "./story-settings/StoryMood";
 import { StoryPeriod } from "./story-settings/StoryPeriod";
 import { StoryAtmosphere } from "./story-settings/StoryAtmosphere";
+import GeneratorsPanel from "./generators/GeneratorsPanel";
 
 interface StoryFormProps {
   onSubmit: (params: StoryParams) => void;
@@ -72,6 +72,11 @@ export default function StoryForm({ onSubmit, loading }: StoryFormProps) {
           <h2 className="text-2xl font-bold text-foreground font-decorative">Craft Your Tale</h2>
           <p className="text-sm text-muted-foreground">Choose how you want to create your story</p>
           
+          <div className="mb-6">
+            <h3 className="text-sm font-medium mb-2">Creative Writing Aids</h3>
+            <GeneratorsPanel />
+          </div>
+
           <Tabs defaultValue="text" value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
             <TabsList className="grid grid-cols-2 w-full">
               <TabsTrigger value="text">Text & Voice</TabsTrigger>
