@@ -1,14 +1,22 @@
 
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Book } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MediaControls } from "./rich-media/MediaControls";
+import { StoryParams } from "@/api/geminiApi";
+import "../styles/animations.css";
 
 interface StoryOutputProps {
   story: string | null;
   loading: boolean;
+  storyParams?: StoryParams;
 }
 
-export default function StoryOutput({ story, loading }: StoryOutputProps) {
+export default function StoryOutput({ story, loading, storyParams = {} as StoryParams }: StoryOutputProps) {
+  const [animationsReady, setAnimationsReady] = useState(false);
+  const storyContentRef = useRef<HTMLDivElement>(null);
+  
   const formatStoryContent = (content: string | null) => {
     if (!content) return [];
     // Split by newlines and filter out empty lines
@@ -20,6 +28,40 @@ export default function StoryOutput({ story, loading }: StoryOutputProps) {
 
   const storyLines = formatStoryContent(story);
   const isDialogue = story ? story.includes(':') && story.split('\n').some(line => line.includes(':')) : false;
+
+  // Initialize animations when content is loaded
+  useEffect(() => {
+    if (story && storyContentRef.current) {
+      // Reset animation state
+      setAnimationsReady(false);
+      
+      // Add base class for transitions
+      storyContentRef.current.classList.add("story-transitions-enabled");
+      
+      // Delay to ensure content is rendered
+      setTimeout(() => {
+        // Get all paragraph elements
+        const paragraphs = storyContentRef.current?.querySelectorAll("p");
+        
+        // Mark paragraphs as animated to trigger transitions
+        if (paragraphs) {
+          paragraphs.forEach((p, index) => {
+            // Mark dialogue lines
+            if (p.textContent?.includes(":")) {
+              p.classList.add("dialogue-line");
+            }
+            
+            // Add animated class with slight delay
+            setTimeout(() => {
+              p.classList.add("animated");
+            }, 50 * index);
+          });
+        }
+        
+        setAnimationsReady(true);
+      }, 100);
+    }
+  }, [story]);
 
   return (
     <Card className="h-full flex flex-col relative overflow-hidden border-2 border-primary/20 shadow-xl dark:shadow-primary/10 bg-gradient-to-br from-card to-background/80">
@@ -48,7 +90,7 @@ export default function StoryOutput({ story, loading }: StoryOutputProps) {
               <p className="mt-6 text-center text-muted-foreground animate-pulse">Weaving words into wonder...</p>
             </div>
           ) : storyLines.length > 0 ? (
-            <div className="space-y-4 leading-relaxed">
+            <div className="space-y-4 leading-relaxed story-content" ref={storyContentRef}>
               {storyLines.map((line, index) => {
                 // Check if this is a dialogue line
                 const isDialogueLine = line.includes(':');
@@ -57,16 +99,12 @@ export default function StoryOutput({ story, loading }: StoryOutputProps) {
                   <p 
                     key={index}
                     className={cn(
-                      "text-foreground transition-all duration-500 animate-fade-in",
+                      "text-foreground transition-all duration-500",
                       // Add styling for dialogue lines
                       isDialogueLine ? "font-medium pl-4 border-l-2 border-primary/40" : "",
                       // First line gets special styling
                       index === 0 ? "first-letter:text-4xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-1" : ""
                     )}
-                    // Add a small delay to each paragraph for a typing effect
-                    style={{ 
-                      animationDelay: `${index * 100}ms`,
-                    }}
                   >
                     {line}
                   </p>
@@ -92,6 +130,16 @@ export default function StoryOutput({ story, loading }: StoryOutputProps) {
           )}
         </div>
       </div>
+      
+      {/* Media controls appear only when a story is generated */}
+      {story && (
+        <div className="border-t border-border/30 p-3">
+          <MediaControls 
+            storyText={story} 
+            storyParams={storyParams}
+          />
+        </div>
+      )}
     </Card>
   );
 }

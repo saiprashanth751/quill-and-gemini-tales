@@ -9,6 +9,7 @@ import StoryOutput from "@/components/StoryOutput";
 
 const Index = () => {
   const [story, setStory] = useState<string | null>(null);
+  const [storyParams, setStoryParams] = useState<StoryParams | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleGenerateStory = async (params: StoryParams) => {
@@ -17,6 +18,7 @@ const Index = () => {
     try {
       const response = await generateStory(params);
       setStory(response.story);
+      setStoryParams(params); // Store the parameters that generated this story
       
       // Show success notification
       toast.success("Your tale has been crafted!");
@@ -41,7 +43,11 @@ const Index = () => {
           
           {/* Story Output */}
           <div className="lg:col-span-3 h-[calc(100vh-160px)]">
-            <StoryOutput story={story} loading={loading} />
+            <StoryOutput 
+              story={story} 
+              loading={loading} 
+              storyParams={storyParams || {}} 
+            />
           </div>
         </div>
       </main>

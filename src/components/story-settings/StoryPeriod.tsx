@@ -9,12 +9,14 @@ interface StoryPeriodProps {
 
 export function StoryPeriod({ value, onChange }: StoryPeriodProps) {
   const periods = [
+    { value: "ancient", label: "Ancient (Before 500 AD)" },
     { value: "medieval", label: "Medieval (500-1500 AD)" },
     { value: "renaissance", label: "Renaissance (1300-1600)" },
     { value: "victorian", label: "Victorian (1837-1901)" },
     { value: "modern", label: "Modern (Present Day)" },
     { value: "near-future", label: "Near Future (Next 50 years)" },
     { value: "far-future", label: "Far Future (100+ years)" },
+    { value: "post-apocalyptic", label: "Post-Apocalyptic" },
   ];
 
   return (
