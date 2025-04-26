@@ -15,6 +15,7 @@ interface StoryOutputProps {
 
 export default function StoryOutput({ story, loading, storyParams = {} as StoryParams }: StoryOutputProps) {
   const [animationsReady, setAnimationsReady] = useState(false);
+  const [highlightedParagraph, setHighlightedParagraph] = useState<number | null>(null);
   const storyContentRef = useRef<HTMLDivElement>(null);
   
   const formatStoryContent = (content: string | null) => {
@@ -34,6 +35,7 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
     if (story && storyContentRef.current) {
       // Reset animation state
       setAnimationsReady(false);
+      setHighlightedParagraph(null);
       
       // Add base class for transitions
       storyContentRef.current.classList.add("story-transitions-enabled");
@@ -63,6 +65,24 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
     }
   }, [story]);
 
+  // Update highlighted paragraph when text-to-speech is playing
+  // This would be connected to TextToSpeech component in a real implementation
+  // For demo, we'll simulate with a useEffect
+  useEffect(() => {
+    if (!story || !animationsReady) return;
+    
+    // Listen for custom events from TextToSpeech component
+    const handleSpeechEvent = (e: CustomEvent) => {
+      setHighlightedParagraph(e.detail.paragraphIndex);
+    };
+    
+    window.addEventListener('speech-paragraph-change' as any, handleSpeechEvent as any);
+    
+    return () => {
+      window.removeEventListener('speech-paragraph-change' as any, handleSpeechEvent as any);
+    };
+  }, [story, animationsReady]);
+
   return (
     <Card className="h-full flex flex-col relative overflow-hidden border-2 border-primary/20 shadow-xl dark:shadow-primary/10 bg-gradient-to-br from-card to-background/80">
       <div className="flex items-center p-5 border-b border-border/40 bg-gradient-to-r from-primary/5 to-background/0">
@@ -79,7 +99,7 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
         <div className="absolute inset-0 bg-parchment-texture opacity-40 pointer-events-none" />
         
         {/* Content container */}
-        <div className="h-full overflow-y-auto p-6 relative z-10 scrollbar-thin">
+        <div className="h-full overflow-y-auto p-4 md:p-6 relative z-10 scrollbar-thin">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <div className="relative w-24 h-24">
@@ -99,11 +119,13 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
                   <p 
                     key={index}
                     className={cn(
-                      "text-foreground transition-all duration-500",
+                      "text-foreground transition-all duration-500 p-1",
                       // Add styling for dialogue lines
                       isDialogueLine ? "font-medium pl-4 border-l-2 border-primary/40" : "",
                       // First line gets special styling
-                      index === 0 ? "first-letter:text-4xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-1" : ""
+                      index === 0 ? "first-letter:text-4xl first-letter:font-bold first-letter:text-primary first-letter:float-left first-letter:mr-1" : "",
+                      // Highlight paragraph being read
+                      highlightedParagraph === index ? "reading" : ""
                     )}
                   >
                     {line}

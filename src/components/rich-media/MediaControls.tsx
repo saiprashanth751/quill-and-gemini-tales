@@ -19,25 +19,27 @@ export function MediaControls({ storyText, storyParams }: MediaControlsProps) {
   return (
     <Card className="p-4 bg-card/80 backdrop-blur-sm">
       <Tabs defaultValue="audio" className="w-full">
-        <TabsList className="grid grid-cols-3 mb-4">
+        <TabsList className="grid grid-cols-3 mb-4 w-full">
           <TabsTrigger value="audio">Audio</TabsTrigger>
           <TabsTrigger value="visual">Visual</TabsTrigger>
           <TabsTrigger value="effects">Effects</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="audio" className="space-y-4">
-          <BackgroundMusic 
-            genre={storyParams.genre as any}
-            isPlaying={!!storyText}
-          />
-          
-          <TextToSpeech 
-            text={storyText} 
-            enabled={!!storyText}
-          />
+        <TabsContent value="audio" className="space-y-4 min-h-[180px]">
+          <div className="grid grid-cols-1 gap-4">
+            <BackgroundMusic 
+              genre={storyParams.genre as any}
+              isPlaying={!!storyText}
+            />
+            
+            <TextToSpeech 
+              text={storyText} 
+              enabled={!!storyText}
+            />
+          </div>
         </TabsContent>
         
-        <TabsContent value="visual" className="space-y-4">
+        <TabsContent value="visual" className="space-y-4 min-h-[180px]">
           <StoryIllustration 
             storyText={storyText} 
             storyGenre={storyParams.genre}
@@ -45,8 +47,8 @@ export function MediaControls({ storyText, storyParams }: MediaControlsProps) {
           />
         </TabsContent>
         
-        <TabsContent value="effects" className="space-y-4">
-          <div className="p-4 space-y-3">
+        <TabsContent value="effects" className="space-y-4 min-h-[180px]">
+          <div className="p-4 space-y-3 bg-background/80 rounded-lg backdrop-blur-sm border border-border/40">
             <h3 className="text-sm font-medium">Animation Settings</h3>
             <StoryTransitionEffects 
               enabled={transitionsEnabled}
