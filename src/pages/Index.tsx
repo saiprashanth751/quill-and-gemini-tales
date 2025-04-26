@@ -46,7 +46,18 @@ const Index = () => {
             <StoryOutput 
               story={story} 
               loading={loading} 
-              storyParams={storyParams || {}} 
+              storyParams={storyParams || {
+                genre: "",
+                plot: "",
+                perspective: "",
+                characters: "",
+                setting: "",
+                format: "",
+                length: "",
+                mood: "",
+                period: "",
+                atmosphere: "",
+              }} 
             />
           </div>
         </div>
