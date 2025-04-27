@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -26,7 +25,7 @@ const localMusicMap: Record<Genre, string> = {
   "erotic": "/audio/smooth-jazz.mp3"
 };
 
-// Fallback to reliable online sources if local files aren't available
+// Reliable online sources
 const onlineMusicMap: Record<Genre, string> = {
   "fantasy": "https://assets.mixkit.co/music/preview/mixkit-medieval-show-fanfare-announcement-226.mp3",
   "sci-fi": "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",
@@ -49,115 +48,91 @@ export function BackgroundMusic({
   const [currentGenre, setCurrentGenre] = useState(genre);
   const [audioLoaded, setAudioLoaded] = useState(false);
   const [usingFallback, setUsingFallback] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Create audio element on mount with improved error handling
   useEffect(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio();
-      audioRef.current.loop = true;
-      audioRef.current.volume = volume;
-      audioRef.current.preload = "auto";
+    // Clean up previous audio element if it exists
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current.remove();
+      audioRef.current = null;
+    }
+    
+    audioRef.current = new Audio();
+    audioRef.current.loop = true;
+    audioRef.current.volume = volume;
+    audioRef.current.preload = "auto";
+    
+    // Try online source first as it's more reliable
+    const tryAudio = (useLocal = false) => {
+      if (!audioRef.current) return;
       
-      // Try local source first
-      audioRef.current.src = localMusicMap[genre];
+      audioRef.current.src = useLocal ? localMusicMap[genre] : onlineMusicMap[genre];
+      setUsingFallback(!useLocal);
       
-      const handleCanPlayThrough = () => {
-        setAudioLoaded(true);
-        console.log("Audio loaded successfully:", audioRef.current?.src);
-      };
+      console.log(`Trying ${useLocal ? "local" : "online"} audio source: ${audioRef.current.src}`);
+    };
+    
+    // Start with online source
+    tryAudio(false);
+    
+    const handleCanPlayThrough = () => {
+      setAudioLoaded(true);
+      setErrorCount(0); // Reset error count on successful load
+      console.log("Audio loaded successfully:", audioRef.current?.src);
+    };
+    
+    const handleError = (e: Event) => {
+      console.log("Audio error occurred:", e);
       
-      const handleError = () => {
-        // If local file fails, try online source
-        if (!usingFallback && audioRef.current) {
-          console.log("Audio error occurred with primary source, trying fallback");
-          setUsingFallback(true);
-          audioRef.current.src = onlineMusicMap[genre];
-          
-          // Add one-time error handler for fallback
-          const fallbackErrorHandler = () => {
-            console.error("Fallback audio source also failed");
-            toast.error("Audio playback issue. Please try again in a few moments.");
-            setPlaying(false);
-            if (onToggleMusic) onToggleMusic(false);
-            audioRef.current?.removeEventListener('error', fallbackErrorHandler);
-          };
-          
-          audioRef.current.addEventListener('error', fallbackErrorHandler, { once: true });
-        }
-      };
+      // Don't try to switch sources if we've already had multiple errors
+      // This prevents infinite error loops
+      if (errorCount > 2) {
+        console.log("Too many errors, stopping audio playback attempts");
+        setPlaying(false);
+        if (onToggleMusic) onToggleMusic(false);
+        toast.error("Audio playback unavailable. Please try again later.");
+        return;
+      }
       
+      setErrorCount(prev => prev + 1);
+      
+      // If online source fails, try local, and vice versa
+      if (usingFallback) {
+        // Already tried both sources, stop trying
+        console.log("Both audio sources failed");
+        setPlaying(false);
+        if (onToggleMusic) onToggleMusic(false);
+        toast.error("Audio playback unavailable. Please check if audio files exist in /public/audio folder.");
+      } else {
+        // If online failed, try local
+        console.log("Trying local audio source as fallback");
+        tryAudio(true);
+      }
+    };
+    
+    if (audioRef.current) {
       audioRef.current.addEventListener('canplaythrough', handleCanPlayThrough);
       audioRef.current.addEventListener('error', handleError);
-      
-      return () => {
-        if (audioRef.current) {
-          audioRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
-          audioRef.current.removeEventListener('error', handleError);
-          audioRef.current.pause();
-          audioRef.current.src = "";
-          audioRef.current = null;
-        }
-      };
     }
     
     return () => {
       if (audioRef.current) {
+        audioRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
+        audioRef.current.removeEventListener('error', handleError);
         audioRef.current.pause();
         audioRef.current.src = "";
         audioRef.current = null;
       }
     };
-  }, []);
-  
-  // Update audio source when genre changes
-  useEffect(() => {
-    if (genre !== currentGenre) {
-      setCurrentGenre(genre);
-      setAudioLoaded(false);
-      setUsingFallback(false);
-      
-      if (audioRef.current) {
-        const wasPlaying = playing && !muted;
-        
-        // Try local source first for new genre
-        audioRef.current.src = localMusicMap[genre];
-        audioRef.current.load();
-        
-        // If local source fails, this will be handled by the error event listener
-        
-        // Resume playing if it was playing before
-        if (wasPlaying) {
-          audioRef.current.play().catch(e => {
-            console.error("Audio playback failed when changing genre:", e);
-            
-            // Check if we need to try the fallback
-            if (!usingFallback) {
-              setUsingFallback(true);
-              audioRef.current!.src = onlineMusicMap[genre];
-              audioRef.current!.load();
-              
-              // Try playing the fallback
-              audioRef.current!.play().catch(fallbackError => {
-                console.error("Fallback audio also failed:", fallbackError);
-                toast.error("Audio playback unavailable at this time");
-                setPlaying(false);
-                if (onToggleMusic) onToggleMusic(false);
-              });
-            } else {
-              toast.error("Failed to play audio track");
-              setPlaying(false);
-              if (onToggleMusic) onToggleMusic(false);
-            }
-          });
-        }
-      }
-    }
-  }, [genre, currentGenre, playing, muted, onToggleMusic, usingFallback]);
+  }, [genre]); // Only recreate audio element when genre changes
   
   // Handle play/pause state changes
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || errorCount > 2) return;
     
     // Update based on parent component control
     if (isPlaying !== playing) {
@@ -168,44 +143,24 @@ export function BackgroundMusic({
       audioRef.current.volume = volume;
       
       if (audioRef.current.paused) {
-        // Add small timeout to avoid immediate playback which can trigger browser restrictions
-        setTimeout(() => {
-          if (audioRef.current) {
-            audioRef.current.play().catch(e => {
-              console.error("Audio playback failed:", e);
-              
-              // If not already using fallback, try it
-              if (!usingFallback) {
-                setUsingFallback(true);
-                audioRef.current!.src = onlineMusicMap[genre];
-                audioRef.current!.load();
-                
-                // Try playing the fallback
-                audioRef.current!.play().catch(fallbackError => {
-                  console.error("Fallback audio also failed:", fallbackError);
-                  toast.error("Playback failed. Click again or check browser autoplay settings.");
-                  toast.info("Try interacting with the page first (click somewhere) then try again", {
-                    duration: 5000
-                  });
-                  setPlaying(false);
-                  if (onToggleMusic) onToggleMusic(false);
-                });
-              } else {
-                toast.error("Playback failed. Click again or check browser autoplay settings.");
-                toast.info("Try interacting with the page first (click somewhere) then try again", {
-                  duration: 5000
-                });
-                setPlaying(false);
-                if (onToggleMusic) onToggleMusic(false);
-              }
-            });
-          }
-        }, 300);
+        const playPromise = audioRef.current.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.error("Audio playback failed:", e);
+            // Don't keep trying if user interaction is needed
+            if (e.name === "NotAllowedError") {
+              toast.error("Playback requires user interaction first");
+              setPlaying(false);
+              if (onToggleMusic) onToggleMusic(false);
+            }
+          });
+        }
       }
-    } else {
+    } else if (audioRef.current) {
       audioRef.current.pause();
     }
-  }, [playing, isPlaying, muted, volume, onToggleMusic, genre, usingFallback]);
+  }, [playing, isPlaying, muted, volume, onToggleMusic, errorCount]);
   
   // Handle volume change
   useEffect(() => {
@@ -215,52 +170,32 @@ export function BackgroundMusic({
   }, [volume, muted]);
   
   const togglePlay = () => {
-    const newPlayingState = !playing;
+    if (errorCount > 2) {
+      toast.error("Audio playback unavailable. Please reload the page or check audio files.");
+      return;
+    }
     
-    if (newPlayingState) {
-      // Try to play
-      if (audioRef.current) {
-        audioRef.current.play()
-          .then(() => {
-            setPlaying(true);
-            if (onToggleMusic) onToggleMusic(true);
-          })
-          .catch(e => {
-            console.error("Audio playback failed:", e);
-            
-            // If not already using fallback, try it
-            if (!usingFallback) {
-              setUsingFallback(true);
-              audioRef.current!.src = onlineMusicMap[genre];
-              audioRef.current!.load();
-              
-              // Try playing the fallback
-              audioRef.current!.play().catch(fallbackError => {
-                console.error("Fallback audio also failed:", fallbackError);
-                toast.error("Playback failed. Click again or check browser autoplay settings.");
-                toast.info("Try interacting with the page first (click somewhere) then try again", {
-                  duration: 5000
-                });
-                setPlaying(false);
-                if (onToggleMusic) onToggleMusic(false);
-              });
-            } else {
-              toast.error("Playback failed. Click again or check browser autoplay settings.");
-              toast.info("Try interacting with the page first (click somewhere) then try again", {
-                duration: 5000
-              });
-              setPlaying(false);
-              if (onToggleMusic) onToggleMusic(false);
-            }
-          });
-      }
-    } else {
-      setPlaying(false);
-      if (onToggleMusic) onToggleMusic(false);
+    const newPlayingState = !playing;
+    setPlaying(newPlayingState);
+    if (onToggleMusic) onToggleMusic(newPlayingState);
+    
+    if (newPlayingState && audioRef.current) {
+      const playPromise = audioRef.current.play();
       
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.error("Play error:", e);
+          if (e.name === "NotAllowedError") {
+            toast.error("Playback requires user interaction first");
+          } else {
+            toast.error("Failed to play audio. Try clicking again.");
+          }
+          setPlaying(false);
+          if (onToggleMusic) onToggleMusic(false);
+        });
       }
+    } else if (audioRef.current) {
+      audioRef.current.pause();
     }
   };
   
@@ -276,9 +211,8 @@ export function BackgroundMusic({
     const newVolume = value[0];
     setVolume(newVolume);
     
-    // Update volume
-    if (audioRef.current) {
-      audioRef.current.volume = muted ? 0 : newVolume;
+    if (audioRef.current && !muted) {
+      audioRef.current.volume = newVolume;
     }
   };
 
@@ -303,6 +237,7 @@ export function BackgroundMusic({
             playing && !muted ? "bg-primary text-primary-foreground" : ""
           )}
           onClick={togglePlay}
+          disabled={errorCount > 2}
         >
           {playing && !muted ? "Playing" : "Play Music"}
         </Button>
@@ -313,6 +248,7 @@ export function BackgroundMusic({
             variant="ghost"
             className="w-8 h-8 p-0 rounded-full"
             onClick={toggleMute}
+            disabled={errorCount > 2}
           >
             {muted || volume === 0 ? (
               <VolumeX className="h-4 w-4" />
@@ -329,10 +265,17 @@ export function BackgroundMusic({
             step={0.01}
             value={[volume]}
             onValueChange={handleVolumeChange}
+            disabled={errorCount > 2}
           />
           <span className="text-xs w-10">{Math.round(volume * 100)}%</span>
         </div>
       </div>
+      
+      {errorCount > 2 && (
+        <div className="text-xs text-orange-500 mt-1">
+          Audio playback unavailable. Please check if audio files exist in /public/audio folder or reload the page.
+        </div>
+      )}
     </div>
   );
 }
