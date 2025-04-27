@@ -23,14 +23,14 @@ export function StoryAtmosphere({ value, onChange }: StoryAtmosphereProps) {
         type="single"
         value={value}
         onValueChange={onChange}
-        className="justify-start gap-4"
+        className="flex flex-wrap justify-start gap-2"
       >
         {atmospheres.map(({ value, label, icon: Icon }) => (
           <ToggleGroupItem
             key={value}
             value={value}
             aria-label={label}
-            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+            className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground flex-shrink-0"
           >
             <Icon className="h-4 w-4 mr-2" />
             {label}
