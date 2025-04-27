@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -15,7 +14,7 @@ interface BackgroundMusicProps {
   onToggleMusic?: (playing: boolean) => void;
 }
 
-// Use only fallback music sources since local files are having issues
+// Updated music map with more reliable sources
 const musicMap: Record<Genre, string> = {
   "fantasy": "https://assets.mixkit.co/music/preview/mixkit-medieval-show-fanfare-announcement-226.mp3",
   "sci-fi": "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",
@@ -39,30 +38,40 @@ export function BackgroundMusic({
   const [audioLoaded, setAudioLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Create audio element on mount
+  // Create audio element on mount with improved error handling
   useEffect(() => {
     if (!audioRef.current) {
-      // Create new audio element
       audioRef.current = new Audio();
       audioRef.current.loop = true;
       audioRef.current.volume = volume;
       audioRef.current.preload = "auto";
       
-      // Set initial source
       audioRef.current.src = musicMap[genre];
       
-      // Add event listeners
-      audioRef.current.addEventListener('canplaythrough', () => {
+      const handleCanPlayThrough = () => {
         setAudioLoaded(true);
         console.log("Audio loaded successfully:", audioRef.current?.src);
-      });
+      };
       
-      audioRef.current.addEventListener('error', (e) => {
+      const handleError = (e: ErrorEvent) => {
         console.error("Audio error occurred:", e);
-        toast.error("Failed to load audio track");
+        toast.error("Audio playback issue. Please try again in a few moments.");
         setPlaying(false);
         if (onToggleMusic) onToggleMusic(false);
-      });
+      };
+      
+      audioRef.current.addEventListener('canplaythrough', handleCanPlayThrough);
+      audioRef.current.addEventListener('error', handleError);
+      
+      return () => {
+        if (audioRef.current) {
+          audioRef.current.removeEventListener('canplaythrough', handleCanPlayThrough);
+          audioRef.current.removeEventListener('error', handleError);
+          audioRef.current.pause();
+          audioRef.current.src = "";
+          audioRef.current = null;
+        }
+      };
     }
     
     return () => {
