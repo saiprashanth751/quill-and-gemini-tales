@@ -3,10 +3,10 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BackgroundMusic } from "./BackgroundMusic";
-import { StoryIllustration } from "./StoryIllustration";
 import { TextToSpeech } from "./TextToSpeech";
-import { StoryTransitionEffects } from "./StoryTransitionEffects";
+import { Book, Headphones } from "lucide-react";
 import { StoryParams } from "@/api/geminiApi";
+import { cn } from "@/lib/utils";
 
 interface MediaControlsProps {
   storyText: string | null;
@@ -14,49 +14,52 @@ interface MediaControlsProps {
 }
 
 export function MediaControls({ storyText, storyParams }: MediaControlsProps) {
-  const [transitionsEnabled, setTransitionsEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabled] = useState(false);
   
   return (
     <Card className="p-4 bg-card/80 backdrop-blur-sm">
-      <Tabs defaultValue="audio" className="w-full">
-        <TabsList className="grid grid-cols-3 mb-4 w-full">
-          <TabsTrigger value="audio">Audio</TabsTrigger>
-          <TabsTrigger value="visual">Visual</TabsTrigger>
-          <TabsTrigger value="effects">Effects</TabsTrigger>
+      <Tabs defaultValue="read" className="w-full">
+        <TabsList className="grid grid-cols-2 mb-4 w-full">
+          <TabsTrigger value="read" className="flex items-center gap-2">
+            <Book className="h-4 w-4" /> Read
+          </TabsTrigger>
+          <TabsTrigger value="listen" className="flex items-center gap-2">
+            <Headphones className="h-4 w-4" /> Listen
+          </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="audio" className="space-y-4 min-h-[180px]">
-          <div className="grid grid-cols-1 gap-4">
+        <TabsContent value="read" className="space-y-4 min-h-[100px]">
+          <div className="p-4 bg-background/80 rounded-lg backdrop-blur-sm border border-border/40">
+            <p className="text-sm text-muted-foreground mb-2">
+              Scroll through your story above. You can enable background music to enhance your reading experience.
+            </p>
+            
             <BackgroundMusic 
               genre={storyParams.genre as any}
-              isPlaying={!!storyText}
-            />
-            
-            <TextToSpeech 
-              text={storyText} 
-              enabled={!!storyText}
+              isPlaying={musicEnabled}
+              onToggleMusic={(playing) => setMusicEnabled(playing)}
             />
           </div>
         </TabsContent>
         
-        <TabsContent value="visual" className="space-y-4 min-h-[180px]">
-          <StoryIllustration 
-            storyText={storyText} 
-            storyGenre={storyParams.genre}
-            enabled={!!storyText}
-          />
-        </TabsContent>
-        
-        <TabsContent value="effects" className="space-y-4 min-h-[180px]">
-          <div className="p-4 space-y-3 bg-background/80 rounded-lg backdrop-blur-sm border border-border/40">
-            <h3 className="text-sm font-medium">Animation Settings</h3>
-            <StoryTransitionEffects 
-              enabled={transitionsEnabled}
-              onChange={setTransitionsEnabled}
+        <TabsContent value="listen" className="space-y-4 min-h-[180px]">
+          <div className="grid grid-cols-1 gap-4">
+            <TextToSpeech 
+              text={storyText} 
+              enabled={!!storyText}
             />
-            <p className="text-xs text-muted-foreground mt-2">
-              Enable or disable animation effects for story transitions and paragraph reveals.
-            </p>
+            
+            <div className={cn(
+              "p-4 bg-background/80 rounded-lg backdrop-blur-sm border border-border/40",
+              "transition-opacity duration-300",
+              musicEnabled ? "opacity-100" : "opacity-80"
+            )}>
+              <BackgroundMusic 
+                genre={storyParams.genre as any}
+                isPlaying={musicEnabled}
+                onToggleMusic={(playing) => setMusicEnabled(playing)}
+              />
+            </div>
           </div>
         </TabsContent>
       </Tabs>

@@ -66,12 +66,9 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
   }, [story]);
 
   // Update highlighted paragraph when text-to-speech is playing
-  // This would be connected to TextToSpeech component in a real implementation
-  // For demo, we'll simulate with a useEffect
   useEffect(() => {
     if (!story || !animationsReady) return;
     
-    // Listen for custom events from TextToSpeech component
     const handleSpeechEvent = (e: CustomEvent) => {
       setHighlightedParagraph(e.detail.paragraphIndex);
     };
@@ -99,7 +96,7 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
         <div className="absolute inset-0 bg-parchment-texture opacity-40 pointer-events-none" />
         
         {/* Content container */}
-        <div className="h-full overflow-y-auto p-4 md:p-6 relative z-10 scrollbar-thin">
+        <div className="h-full overflow-y-auto p-4 md:p-6 lg:p-8 relative z-10 scrollbar-thin">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-full">
               <div className="relative w-24 h-24">
@@ -155,7 +152,7 @@ export default function StoryOutput({ story, loading, storyParams = {} as StoryP
       
       {/* Media controls appear only when a story is generated */}
       {story && (
-        <div className="border-t border-border/30 p-3">
+        <div className="border-t border-border/30 p-3 md:p-4">
           <MediaControls 
             storyText={story} 
             storyParams={storyParams}

@@ -12,10 +12,22 @@ interface BackgroundMusicProps {
   genre: Genre;
   isPlaying?: boolean;
   defaultVolume?: number;
+  onToggleMusic?: (playing: boolean) => void;
 }
 
-// Demo audio URLs that actually work (replace with real audio files in production)
+// Audio files available locally for better reliability
 const musicMap: Record<Genre, string> = {
+  "fantasy": "/audio/fantasy.mp3",
+  "sci-fi": "/audio/sci-fi.mp3",
+  "mystery": "/audio/mystery.mp3",
+  "horror": "/audio/horror.mp3",
+  "adventure": "/audio/adventure.mp3",
+  "romance": "/audio/romance.mp3",
+  "erotic": "/audio/romance.mp3"  // Reusing romance for erotic
+};
+
+// Fallback to external tracks if local ones don't exist
+const fallbackMusicMap: Record<Genre, string> = {
   "fantasy": "https://assets.mixkit.co/music/preview/mixkit-medieval-show-fanfare-announcement-226.mp3",
   "sci-fi": "https://assets.mixkit.co/music/preview/mixkit-tech-house-vibes-130.mp3",
   "mystery": "https://assets.mixkit.co/music/preview/mixkit-suspense-mystery-bass-685.mp3",
@@ -25,11 +37,17 @@ const musicMap: Record<Genre, string> = {
   "erotic": "https://assets.mixkit.co/music/preview/mixkit-loungey-beat-220.mp3"
 };
 
-export function BackgroundMusic({ genre, isPlaying = false, defaultVolume = 0.5 }: BackgroundMusicProps) {
+export function BackgroundMusic({ 
+  genre, 
+  isPlaying = false, 
+  defaultVolume = 0.5,
+  onToggleMusic 
+}: BackgroundMusicProps) {
   const [playing, setPlaying] = useState(isPlaying);
   const [volume, setVolume] = useState(defaultVolume);
   const [muted, setMuted] = useState(false);
   const [currentGenre, setCurrentGenre] = useState(genre);
+  const [usingFallback, setUsingFallback] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Create audio element on mount
@@ -40,11 +58,33 @@ export function BackgroundMusic({ genre, isPlaying = false, defaultVolume = 0.5 
       audioRef.current.volume = volume;
       audioRef.current.preload = "auto";
       
-      // Add error handling
-      audioRef.current.onerror = (e) => {
-        console.error("Audio error:", e);
-        toast.error("Failed to load audio track");
-        setPlaying(false);
+      // Try loading the primary source first
+      audioRef.current.src = musicMap[genre];
+      
+      // Handle errors by switching to fallback
+      audioRef.current.onerror = () => {
+        console.error("Audio error occurred with primary source, trying fallback");
+        if (!usingFallback) {
+          setUsingFallback(true);
+          if (audioRef.current) {
+            audioRef.current.src = fallbackMusicMap[genre];
+            
+            // If we were trying to play, retry with the fallback source
+            if (playing) {
+              audioRef.current.play().catch(e => {
+                console.error("Fallback audio playback failed:", e);
+                toast.error("Failed to play audio track");
+                setPlaying(false);
+                if (onToggleMusic) onToggleMusic(false);
+              });
+            }
+          }
+        } else {
+          console.error("Both audio sources failed");
+          toast.error("Failed to load audio track");
+          setPlaying(false);
+          if (onToggleMusic) onToggleMusic(false);
+        }
       };
     }
     
@@ -61,42 +101,79 @@ export function BackgroundMusic({ genre, isPlaying = false, defaultVolume = 0.5 
   useEffect(() => {
     if (genre !== currentGenre) {
       setCurrentGenre(genre);
+      setUsingFallback(false);
       
-      if (audioRef.current && musicMap[genre]) {
+      if (audioRef.current) {
         const wasPlaying = playing && !muted;
+        
+        // First try the primary source
         audioRef.current.src = musicMap[genre];
         audioRef.current.load();
         
+        // Setup error handler for this specific load event
+        const handleError = () => {
+          console.error("Audio source error when changing genre, trying fallback");
+          if (audioRef.current) {
+            audioRef.current.src = fallbackMusicMap[genre];
+            audioRef.current.load();
+            
+            if (wasPlaying) {
+              audioRef.current.play().catch(e => {
+                console.error("Audio playback failed on fallback:", e);
+                toast.error("Failed to play audio track");
+                setPlaying(false);
+                if (onToggleMusic) onToggleMusic(false);
+              });
+            }
+          }
+          
+          // Remove this specific error handler
+          if (audioRef.current) {
+            audioRef.current.removeEventListener('error', handleError);
+          }
+        };
+        
+        audioRef.current.addEventListener('error', handleError, { once: true });
+        
         if (wasPlaying) {
           audioRef.current.play().catch(e => {
-            console.error("Audio playback failed:", e);
-            toast.error("Failed to play audio track");
-            setPlaying(false);
+            // Error will be handled by the error event listener
+            console.error("Initial playback failed when changing genre:", e);
           });
         }
       }
     }
-  }, [genre, currentGenre, playing, muted]);
+  }, [genre, currentGenre, playing, muted, onToggleMusic]);
   
-  // Handle play/pause
+  // Handle play/pause state changes
   useEffect(() => {
     if (!audioRef.current) return;
     
+    // Update based on parent component control
+    if (isPlaying !== playing) {
+      setPlaying(isPlaying);
+    }
+    
     if (playing && !muted) {
       audioRef.current.volume = volume;
-      audioRef.current.src = audioRef.current.src || musicMap[genre];
+      
+      // Make sure we have a source
+      if (!audioRef.current.src || audioRef.current.src === window.location.href) {
+        audioRef.current.src = usingFallback ? fallbackMusicMap[genre] : musicMap[genre];
+      }
       
       if (audioRef.current.paused) {
         audioRef.current.play().catch(e => {
           console.error("Audio playback failed:", e);
-          toast.error("Failed to play audio track");
+          toast.error("Playback failed. Click again or check browser autoplay settings.");
           setPlaying(false);
+          if (onToggleMusic) onToggleMusic(false);
         });
       }
     } else {
       audioRef.current.pause();
     }
-  }, [playing, muted, genre, volume]);
+  }, [playing, isPlaying, muted, genre, volume, usingFallback, onToggleMusic]);
   
   // Handle volume change
   useEffect(() => {
@@ -106,24 +183,41 @@ export function BackgroundMusic({ genre, isPlaying = false, defaultVolume = 0.5 
   }, [volume, muted]);
   
   const togglePlay = () => {
-    if (!playing) {
+    const newPlayingState = !playing;
+    
+    if (newPlayingState) {
       // Try to play and handle any autoplay restrictions
       if (audioRef.current) {
-        audioRef.current.src = audioRef.current.src || musicMap[genre];
+        // Ensure we have a valid source
+        if (!audioRef.current.src || audioRef.current.src === window.location.href) {
+          audioRef.current.src = usingFallback ? fallbackMusicMap[genre] : musicMap[genre];
+        }
+        
         audioRef.current.play()
-          .then(() => setPlaying(true))
+          .then(() => {
+            setPlaying(true);
+            if (onToggleMusic) onToggleMusic(true);
+          })
           .catch(e => {
             console.error("Audio playback failed:", e);
             toast.error("Playback failed. Click again or check browser autoplay settings.");
             setPlaying(false);
+            if (onToggleMusic) onToggleMusic(false);
           });
       }
     } else {
       setPlaying(false);
+      if (onToggleMusic) onToggleMusic(false);
     }
   };
   
-  const toggleMute = () => setMuted(!muted);
+  const toggleMute = () => {
+    setMuted(!muted);
+    
+    if (audioRef.current) {
+      audioRef.current.volume = !muted ? 0 : volume;
+    }
+  };
   
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0];
@@ -136,13 +230,13 @@ export function BackgroundMusic({ genre, isPlaying = false, defaultVolume = 0.5 
   };
   
   return (
-    <div className="flex flex-col space-y-2 bg-background/80 rounded-lg p-3 backdrop-blur-sm border border-border/40">
+    <div className="flex flex-col space-y-2">
       <h3 className="text-sm font-medium flex items-center gap-1 mb-1">
         <Music className="h-4 w-4 text-primary" />
         Background Music <span className="text-xs text-muted-foreground ml-1">({genre})</span>
       </h3>
       
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button
           size="sm"
           variant={playing && !muted ? "default" : "outline"}
