@@ -17,7 +17,8 @@ export default function Header() {
             </div>
           </div>
           <h1 className="text-xl font-bold md:text-2xl bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent">
-            <span className="text-primary font-decorative">Quill</span> & <span className="font-italic">Gemini</span> Tales
+            <span className="text-primary font-decorative">Katha</span>
+            <span className="font-italic">Kalam</span>
           </h1>
         </div>
         

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { generateStory, StoryParams } from "@/api/geminiApi";
 import { toast } from "@/components/ui/sonner";
@@ -72,12 +71,6 @@ const Index = () => {
           </div>
         </div>
       </main>
-      
-      <footer className="py-4 md:py-6 border-t border-border/20 bg-gradient-to-r from-card via-background to-card">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>Powered by Google Gemini API & React</p>
-        </div>
-      </footer>
     </div>
   );
 };
