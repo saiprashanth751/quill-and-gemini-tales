@@ -14,7 +14,7 @@ export function StoryLength({ value, onChange }: StoryLengthProps) {
       <RadioGroup
         value={value}
         onValueChange={onChange}
-        className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-2"
       >
         {[
           { value: "short", label: "Short", words: "~1000 words" },
@@ -31,9 +31,9 @@ export function StoryLength({ value, onChange }: StoryLengthProps) {
               id={option.value}
               className="peer sr-only"
             />
-            <div className="rounded-lg border-2 border-muted p-3 sm:p-4 hover:border-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all">
-              <div className="font-semibold">{option.label}</div>
-              <div className="text-xs text-muted-foreground">{option.words}</div>
+            <div className="rounded-lg border-2 border-muted p-2 sm:p-3 hover:border-primary peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all h-full">
+              <div className="font-semibold text-sm sm:text-base">{option.label}</div>
+              <div className="text-xs text-muted-foreground truncate">{option.words}</div>
             </div>
           </Label>
         ))}
