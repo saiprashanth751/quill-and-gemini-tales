@@ -1,48 +1,106 @@
-# Welcome to your KathaVerse
+# KathaVerse: Your AI Story Weaver
 
-## Project info
+Unleash your imagination and craft captivating tales with the power of AI.
 
-**URL**: https://quill-and-gemini-tales.vercel.app/
+---
 
-## How can I edit this code?
+## Table of Contents
 
-There are several ways of editing your application.
+1. [Project Overview](#project-overview)
+2. [Features](#features)
+3. [Tech Stack](#tech-stack)
+4. [Architecture](#architecture)
+5. [Getting Started](#getting-started)
+---
 
-**Use your preferred IDE**
+## Project Overview
 
-If you want to work locally using your own IDE, you can clone this repo and push changes.
+KathaVerse is an innovative web application that empowers storytellers, writers, and creative enthusiasts to overcome writer’s block and rapidly prototype engaging narratives. Using AI-driven content generation, KathaVerse transforms text, voice, or image inputs into structured stories across multiple genres and styles.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Features
 
-Follow these steps:
+* **Intelligent Story Generation**
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+  * **Text Input**: Enter plot details, characters, and setting to generate unique stories.
+  * **Voice Input**: Speak your ideas; AI transcribes and crafts the narrative.
+  * **Image Input**: Upload an image to inspire a story based on visual cues.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+* **Customizable Parameters**
 
-# Step 3: Install the necessary dependencies.
-npm i
+  * **Genre**: Choose from Fantasy, Sci-Fi, Mystery, Horror, Adventure, Romance, and more.
+  * **Perspective**: First-person, Second-person, or Third-person narration.
+  * **Format**: Traditional narrative or dialogue-only scripts.
+  * **Mood & Setting**: Control atmosphere (e.g., weather, season, emotional tone).
+  * **Time Period**: Place stories in Ancient, Medieval, Modern, or future settings.
+  * **Length**: Specify Short, Medium, or Long story lengths.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+* **Immersive Experience**
+
+  * **Background Music**: Play, pause, and control volume for mood-enhancing tracks.
+  * **Text-to-Speech**: Listen to stories with adjustable speed, voice selection, and sentence highlighting.
+
+* **User Interface**
+
+  * **Responsive Design**: Fluid layout for desktop, tablet, and mobile.
+  * **Animations**: Smooth, cascading effects for an immersive reading experience.
+  * **Theme Toggle**: Light and dark mode support.
+
+## Tech Stack
+
+* **Frontend**
+
+  * **React** & **TypeScript**
+  * **Vite** for fast development and builds
+  * **Tailwind CSS** & **shadcn/ui** for styling and accessible components
+  * **react-router-dom**, **@tanstack/react-query**, **react-hook-form** & **zod**
+  * **Web Speech API** for voice input and text-to-speech
+
+* **AI/ML**
+
+  * **Google Gemini API** for story generation and multimodal input processing
+
+## Architecture
+
+KathaVerse is a Single-Page Application (SPA) with client-side AI integration:
+
+1. **User Input**: Handled by `StoryForm.tsx`, capturing text, voice, or image data.
+2. **API Module**: `geminiApi.ts` constructs prompts, manages requests, and caches responses with in-memory store.
+3. **Story Rendering**: `StoryOutput.tsx` displays generated text and rich media controls (music, TTS).
+4. **UI Components**: A suite of reusable Shadcn UI components ensures consistency and accessibility.
+
+*Client → Google Gemini API → Client*
+
+## Getting Started
+
+### Prerequisites
+
+* **Node.js** v18 or higher
+* **npm**
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/kathaverse.git
+cd kathaverse
+
+# Install dependencies
+npm install
+```
+
+### Development
+
+```bash
+# Start the dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Visit `http://localhost:8080` in your browser to explore KathaVerse.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Production Build
 
+```bash
+npm run build
+```
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Compiled files will be in the `dist` folder, ready for deployment.
